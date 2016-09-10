@@ -1,10 +1,12 @@
 % dragable & resizeable & unit-support %menucommand-support  SCALEBAR
-% @Chenxinfeng, 2016-9-6
+% @Chenxinfeng, 2016-9-10
 %
 % ================================HOW TO USE==============================
 % ----PREPARE---
 % plot(sin(1:0.1:10));
-% obj = scalebar;
+% obj = scalebar; %default, recommanded
+% obj = scalebar(___,Name,Value);
+% obj = scalebar(ax,___);
 %
 % ---GUI support---
 % %drag the SCALE-LABEL, to move only the LABEL position.
@@ -13,7 +15,7 @@
 % %Right-Click on SCALE-LINE, to set SCALE-Length and -Unit.
 %
 % ---Command support---
-% obj.XLen = 15;              %X-Length, 10.
+% obj.XLen = 15;              %X-Length, 15.
 % obj.XUnit = 'm';            %X-Unit, 'm'.
 % obj.Position = [55, -0.6];  %move the whole SCALE position.
 % obj.hTextX_Pos = [1,-0.06]; %move only the LABEL position
@@ -26,47 +28,46 @@ classdef scalebar <handle
 		hLineY %SCALE-Y-LINE, L&H
 		hTextX %SCALE-X-LABEL
 		hTextY %SCALE-Y-LABEL
-		hAxes  %SCALE-AXES
 	end
 	properties (SetObservable=true)
 	% Main properties
-		Position=[0 0]        %SCALE-POSITION, [X,Y]
-		Border                %'LL', 'LR', 'UL', 'UR'
+		Position              %SCALE-POSITION, [X,Y]
+		Border='LL'           %'LL', 'LR', 'UL', 'UR'
 		XUnit=''              %SCALE-X-UNIT, string
 		YUnit=''              %SCALE-Y-UNIT
-		XLen=1                %SCALE-X-LENGTH
-		YLen=1                %SCALE-Y-LENGTH
-		hTextX_Pos=[0 0]      %SCALE-X-LABEL-POSITION
-		hTextY_Pos=[0 0]      %SCALE-Y-LABEL-POSITION
+		XLen                  %SCALE-X-LENGTH
+		YLen                  %SCALE-Y-LENGTH
+		hTextX_Pos            %SCALE-X-LABEL-POSITION
+		hTextY_Pos            %SCALE-Y-LABEL-POSITION
 	end
 	methods
-		function hobj = scalebar(haxes)
-            %Get haxes
-			if ~exist('haxes','var') || ~ishandle(haxes)
-				haxes = gca;
+		function hobj = scalebar(varargin)                        
+            %get axes
+            if isempty(varargin)||~isscalar(varargin{1})||~ishandle(varargin{1})
+                hAxes = gca;
+            else
+                hAxes = varargin{1};
             end
-            hobj.hAxes = haxes;
-            hold(hobj.hAxes,'on')
-            
+            hold(hAxes,'on'); 
             %listen to Prop change
-            for prop={'Position','Border','XUnit','YUnit',...
-                      'XLen','YLen','hTextX_Pos','hTextY_Pos'}
+            for prop={'XLen','YLen','XUnit','YUnit',...
+                      'Position','Border','hTextX_Pos','hTextY_Pos'}
                 funstr = eval(['@hobj.Set',prop{1}]);
                 addlistener(hobj,prop{1},'PostSet',funstr);
             end
 			%Get axis parameters
-			axisXLim = get(hobj.hAxes,'XLim');
-			axisYLim = get(hobj.hAxes,'YLim');
+			axisXLim = get(hAxes,'XLim');
+			axisYLim = get(hAxes,'YLim');
 			axisXWidth = diff(axisXLim);
 			axisYWidth = diff(axisYLim);
 
 			%Get or Create GUI handles
-			templine = plot([0 0],[0 0],'Parent', hobj.hAxes,'Color','k','LineWidth',1.5);
+			templine = plot([0 0],[0 0],'Parent',hAxes,'Color','k','LineWidth',1.5);
             hobj.hLineX = [copy(templine), templine];
 			hobj.hLineY = [copy(templine), copy(templine)];
-            set([hobj.hLineY, hobj.hLineX], 'Parent',hobj.hAxes,'ButtonDownFcn',@hobj.FcnStartDrag); 
-			hobj.hTextX = text(0,0,'','Parent',hobj.hAxes,'ButtonDownFcn',@hobj.FcnStartDrag);
-			hobj.hTextY = text(0,0,'','Parent',hobj.hAxes,'Rotation',90,'ButtonDownFcn',@hobj.FcnStartDrag);
+            set([hobj.hLineY, hobj.hLineX], 'Parent',hAxes,'ButtonDownFcn',@hobj.FcnStartDrag); 
+			hobj.hTextX = text(0,0,'','Parent',hAxes,'ButtonDownFcn',@hobj.FcnStartDrag);
+			hobj.hTextY = text(0,0,'','Parent',hAxes,'Rotation',90,'ButtonDownFcn',@hobj.FcnStartDrag);
             
             %UIMENU for RITHT-CLICK
             hcmenu = uicontextmenu;
@@ -83,12 +84,28 @@ classdef scalebar <handle
             set(hobj.hTextY,'uicontextmenu',hcmenu_text);
             uimenu('parent',hcmenu_text,'label','Rotate',...               
                    'callback',@(o,e)set(hobj.hTextY,'Rotation',get(hobj.hTextY,'Rotation')+90));
-            
+            %Parse Param-Value
+            p = inputParser;
+            p.addParameter('Position',[axisXLim(1) + 0.1*axisXWidth, axisYLim(1) + 0.1*axisYWidth]);
+            p.addParameter('Border',hobj.Border);
+            p.addParameter('XUnit',hobj.XUnit);
+            p.addParameter('YUnit',hobj.YUnit);
+            p.addParameter('XLen',0.1*axisXWidth);
+            p.addParameter('YLen',0.1*axisYWidth);
+            p.addParameter('hTextX_Pos',0.02*[axisXWidth, -axisYWidth]);
+            p.addParameter('hTextY_Pos',0.02*[-axisXWidth, axisYWidth]);
+            if isempty(varargin) %scalebar() 
+                p.parse();
+            elseif ~ishandle(varargin{1}) %scalebar('Prop','Value')
+				p.parse(varargin{:});
+            else %scalebar(hAxes,'Prop','Value')
+                p.parse(varargin{2:end});
+            end
 			%default settings
-			hobj.Position = [axisXLim(1) + 0.1*axisXWidth, axisYLim(1) + 0.1*axisYWidth] ;
-			hobj.XLen = 0.1*axisXWidth;
-			hobj.YLen = 0.1*axisYWidth;
-			hobj.Border = 'LL';
+            for prop={'XLen','YLen','XUnit','YUnit',...
+                      'Position','Border','hTextX_Pos','hTextY_Pos'}
+                hobj.(prop{1}) = p.Results.(prop{1});
+            end
         end
         function delete(hobj)
             delete(hobj.hLineX);
@@ -125,7 +142,6 @@ classdef scalebar <handle
 			set(hobj.hLineX, 'XData', XPos+[0 hobj.XLen]);
 			set(hobj.hTextX, 'Position', [hobj.hTextX_Pos+value, 0]);
 			set(hobj.hTextY, 'Position', [hobj.hTextY_Pos+value, 0]);
-%             disp([hobj.hTextX_Pos+value])
 		end
 		function SethTextX_Pos(hobj, varargin)
             value = hobj.hTextX_Pos;
