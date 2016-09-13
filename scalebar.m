@@ -134,6 +134,7 @@ classdef scalebar <handle
             value = hobj.Position;
 			XPos = value(1);
 			YPos = value(2);
+            if isempty(hobj.XLen);hobj.XLen=0; hobj.YLen=0;end
 			set(hobj.hLineY(1), 'XData', XPos*[1 1]);
  			set(hobj.hLineY(2), 'XData', (XPos+hobj.XLen)*[1 1]);
 			set(hobj.hLineX(1), 'YData', YPos*[1 1]);
