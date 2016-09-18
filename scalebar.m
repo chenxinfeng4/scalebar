@@ -49,6 +49,13 @@ classdef scalebar <handle
                 hAxes = varargin{1};
             end
             hold(hAxes,'on'); 
+            %props pretend initing
+            hobj.XLen = 0;
+            hobj.YLen = 0;
+            hobj.Position = [0 0];
+            hobj.hTextX_Pos = [0 0];
+            hobj.hTextY_Pos = [0 0];
+            
             %listen to Prop change
             for prop={'XLen','YLen','XUnit','YUnit',...
                       'Position','Border','hTextX_Pos','hTextY_Pos'}
@@ -72,17 +79,19 @@ classdef scalebar <handle
             %UIMENU for RITHT-CLICK
             hcmenu = uicontextmenu;
             set([hobj.hLineX, hobj.hLineY],'uicontextmenu',hcmenu);
-            uimenu('parent',hcmenu,'label','[X] Length', ...               
+            uimenu('parent',hcmenu,'label','[X] Length', ...
                    'callback',@(o,e)hobj.uiSetLen('X'));
-            uimenu('parent',hcmenu,'label','[X] Unit', ...               
+            uimenu('parent',hcmenu,'label','[X] Unit', ...
                    'callback',@(o,e)hobj.uiSetUnit('X'));
-            uimenu('parent',hcmenu,'label','[Y] Length', 'separator','on',...               
+            uimenu('parent',hcmenu,'label','[Y] Length', 'separator','on',...
                    'callback',@(o,e)hobj.uiSetLen('Y'));
-            uimenu('parent',hcmenu,'label','[Y] Unit', ...               
+            uimenu('parent',hcmenu,'label','[Y] Unit', ...
                    'callback',@(o,e)hobj.uiSetUnit('Y'));
+            uimenu('parent',hcmenu,'label','Delete me', 'separator','on',...
+                   'callback',@(o,e)hobj.delete(),'ForegroundColor',[0,0,1]);
             hcmenu_text = uicontextmenu;
             set(hobj.hTextY,'uicontextmenu',hcmenu_text);
-            uimenu('parent',hcmenu_text,'label','Rotate',...               
+            uimenu('parent',hcmenu_text,'label','Rotate',...
                    'callback',@(o,e)set(hobj.hTextY,'Rotation',get(hobj.hTextY,'Rotation')+90));
             %Parse Param-Value
             p = inputParser;
@@ -134,7 +143,6 @@ classdef scalebar <handle
             value = hobj.Position;
 			XPos = value(1);
 			YPos = value(2);
-            if isempty(hobj.XLen);hobj.XLen=0; hobj.YLen=0;end
 			set(hobj.hLineY(1), 'XData', XPos*[1 1]);
  			set(hobj.hLineY(2), 'XData', (XPos+hobj.XLen)*[1 1]);
 			set(hobj.hLineX(1), 'YData', YPos*[1 1]);
