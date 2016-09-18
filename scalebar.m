@@ -20,6 +20,7 @@
 % obj.Position = [55, -0.6];  %move the whole SCALE position.
 % obj.hTextX_Pos = [1,-0.06]; %move only the LABEL position
 % obj.Border = 'UL';          %'LL'(default), 'LR', 'UL', 'UR'
+% obj.hTextY_Rot = 0;         %Y-LABEL rotation change as horizontal.
 
 classdef scalebar <handle
     properties (SetAccess = private, GetAccess = public)
@@ -39,6 +40,7 @@ classdef scalebar <handle
 		YLen                  %SCALE-Y-LENGTH
 		hTextX_Pos            %SCALE-X-LABEL-POSITION
 		hTextY_Pos            %SCALE-Y-LABEL-POSITION
+		hTextY_Rot=90         %SCALE-Y-LABEL-ROTATION
 	end
 	methods
 		function hobj = scalebar(varargin)                        
@@ -57,7 +59,7 @@ classdef scalebar <handle
             hobj.hTextY_Pos = [0 0];
             
             %listen to Prop change
-            for prop={'XLen','YLen','XUnit','YUnit',...
+            for prop={'XLen','YLen','XUnit','YUnit','hTextY_Rot'...
                       'Position','Border','hTextX_Pos','hTextY_Pos'}
                 funstr = eval(['@hobj.Set',prop{1}]);
                 addlistener(hobj,prop{1},'PostSet',funstr);
@@ -92,7 +94,7 @@ classdef scalebar <handle
             hcmenu_text = uicontextmenu;
             set(hobj.hTextY,'uicontextmenu',hcmenu_text);
             uimenu('parent',hcmenu_text,'label','Rotate',...
-                   'callback',@(o,e)set(hobj.hTextY,'Rotation',get(hobj.hTextY,'Rotation')-90));
+                   'callback',@(o,e)hobj.uiSetYRot());
             %Parse Param-Value
             p = inputParser;
             p.addParameter('Position',[axisXLim(1) + 0.1*axisXWidth, axisYLim(1) + 0.1*axisYWidth]);
@@ -103,6 +105,7 @@ classdef scalebar <handle
             p.addParameter('YLen',0.1*axisYWidth);
             p.addParameter('hTextX_Pos',0.02*[axisXWidth, -axisYWidth]);
             p.addParameter('hTextY_Pos',0.02*[-axisXWidth, axisYWidth]);
+            p.addParameter('hTextY_Rot',hobj.hTextY_Rot);
             if isempty(varargin) %scalebar() 
                 p.parse();
             elseif ~ishandle(varargin{1}) %scalebar('Prop','Value')
@@ -111,7 +114,7 @@ classdef scalebar <handle
                 p.parse(varargin{2:end});
             end
 			%default settings
-            for prop={'XLen','YLen','XUnit','YUnit',...
+            for prop={'XLen','YLen','XUnit','YUnit','hTextY_Rot',...
                       'Position','Border','hTextX_Pos','hTextY_Pos'}
                 hobj.(prop{1}) = p.Results.(prop{1});
             end
@@ -136,6 +139,9 @@ classdef scalebar <handle
             unit = answer{1};
             hobj.(propname) = unit;
         end
+        function uiSetYRot(hobj,varargin)
+            hobj.hTextY_Rot = hobj.hTextY_Rot - 90;
+        end
 	end
 	methods
 	% Setting properties
@@ -159,8 +165,11 @@ classdef scalebar <handle
 		function SethTextY_Pos(hobj,  varargin)
             value = hobj.hTextY_Pos;
 			set(hobj.hTextY, 'Position', [hobj.Position+value, 0]);
-			hobj.hTextY_Pos = value;
-		end
+        end
+        function SethTextY_Rot(hobj, varargin)
+            value = hobj.hTextY_Rot;
+            set(hobj.hTextY, 'Rotation', value);
+        end
 		function SetBorder(hobj,  varargin)
             value = hobj.Border;
 			XTyp = value(1);
