@@ -92,7 +92,7 @@ classdef scalebar <handle
             hcmenu_text = uicontextmenu;
             set(hobj.hTextY,'uicontextmenu',hcmenu_text);
             uimenu('parent',hcmenu_text,'label','Rotate',...
-                   'callback',@(o,e)set(hobj.hTextY,'Rotation',get(hobj.hTextY,'Rotation')+90));
+                   'callback',@(o,e)set(hobj.hTextY,'Rotation',get(hobj.hTextY,'Rotation')-90));
             %Parse Param-Value
             p = inputParser;
             p.addParameter('Position',[axisXLim(1) + 0.1*axisXWidth, axisYLim(1) + 0.1*axisYWidth]);
