@@ -91,6 +91,8 @@ classdef scalebar <handle
                    'callback',@(o,e)hobj.uiSetUnit('Y'));
             uimenu('parent',hcmenu,'label','Delete me', 'separator','on',...
                    'callback',@(o,e)hobj.delete(),'ForegroundColor',[0,0,1]);
+            uimenu('parent',hcmenu,'label','axis on/off', ...
+                   'callback',@(o,e)hobj.uiAxesOnOff(),'ForegroundColor',[0,0,1]);
             hcmenu_text = uicontextmenu;
             set(hobj.hTextY,'uicontextmenu',hcmenu_text);
             uimenu('parent',hcmenu_text,'label','Rotate',...
@@ -101,8 +103,8 @@ classdef scalebar <handle
             p.addParameter('Border',hobj.Border);
             p.addParameter('XUnit',hobj.XUnit);
             p.addParameter('YUnit',hobj.YUnit);
-            p.addParameter('XLen',0.1*axisXWidth);
-            p.addParameter('YLen',0.1*axisYWidth);
+            p.addParameter('XLen',nearto(0.1*axisXWidth));
+            p.addParameter('YLen',nearto(0.1*axisYWidth));
             p.addParameter('hTextX_Pos',0.02*[axisXWidth, -axisYWidth]);
             p.addParameter('hTextY_Pos',0.02*[-axisXWidth, axisYWidth]);
             p.addParameter('hTextY_Rot',hobj.hTextY_Rot);
@@ -141,6 +143,15 @@ classdef scalebar <handle
         end
         function uiSetYRot(hobj,varargin)
             hobj.hTextY_Rot = hobj.hTextY_Rot - 90;
+        end
+        function uiAxesOnOff(~, varargin)
+            status_pre = get(gca, 'Visible');
+            if strcmpi(status_pre, 'on')
+                status_post = 'off';
+            else
+                status_post = 'on';
+            end
+            set(gca, 'Visible', status_post);
         end
 	end
 	methods
@@ -251,4 +262,10 @@ classdef scalebar <handle
 		end
 	end
 
+end
+function numout = nearto(numin)
+    order = 10^( floor(log10(numin)) );
+    scale = [1 ,2 ,5];
+    ind = find(scale<= numin/order,1,'last');
+    numout = scale(ind) * order;
 end
