@@ -1,5 +1,6 @@
 % dragable & resizeable & unit-support %menucommand-support  SCALEBAR
 % @Chenxinfeng, 2016-9-10
+% @JupeNupes, 2022-8-23-- added color properties
 %
 % ================================HOW TO USE==============================
 % ----PREPARE---
@@ -33,9 +34,10 @@ classdef scalebar <handle
 	properties (SetObservable=true)
 	% Main properties
 		Position              %SCALE-POSITION, [X,Y]
-		Border='LL'           %'LL', 'LR', 'UL', 'UR'
-		XUnit=''              %SCALE-X-UNIT, string
-		YUnit=''              %SCALE-Y-UNIT
+        Color                 %Line and Text Color Parameter
+		Border = 'UR'           %'LL', 'LR', 'UL', 'UR'
+		XUnit = ''              %SCALE-X-UNIT, string
+		YUnit = ''              %SCALE-Y-UNIT
 		XLen                  %SCALE-X-LENGTH
 		YLen                  %SCALE-Y-LENGTH
 		hTextX_Pos            %SCALE-X-LABEL-POSITION
@@ -50,20 +52,24 @@ classdef scalebar <handle
             else
                 hAxes = varargin{1};
             end
+            % Turn holding on
             hold(hAxes,'on'); 
+
             %props pretend initing
             hobj.XLen = 0;
             hobj.YLen = 0;
             hobj.Position = [0 0];
             hobj.hTextX_Pos = [0 0];
             hobj.hTextY_Pos = [0 0];
+            hobj.Color = [0 0 0];
             
             %listen to Prop change
             for prop={'XLen','YLen','XUnit','YUnit','hTextY_Rot'...
-                      'Position','Border','hTextX_Pos','hTextY_Pos'}
+                      'Position','Border','hTextX_Pos','hTextY_Pos','Color'}
                 funstr = eval(['@hobj.Set',prop{1}]);
                 addlistener(hobj,prop{1},'PostSet',funstr);
             end
+
 			%Get axis parameters
 			axisXLim = get(hAxes,'XLim');
 			axisYLim = get(hAxes,'YLim');
@@ -71,12 +77,12 @@ classdef scalebar <handle
 			axisYWidth = diff(axisYLim);
 
 			%Get or Create GUI handles
-			templine = plot([0 0],[0 0],'Parent',hAxes,'Color','k','LineWidth',1.5);
+			templine = plot([0 0],[0 0],'Parent',hAxes,'Color',hobj.Color,'LineWidth',1.5);
             hobj.hLineX = [copy(templine), templine];
 			hobj.hLineY = [copy(templine), copy(templine)];
             set([hobj.hLineY, hobj.hLineX], 'Parent',hAxes,'ButtonDownFcn',@hobj.FcnStartDrag); 
-			hobj.hTextX = text(0,0,'','Parent',hAxes,'ButtonDownFcn',@hobj.FcnStartDrag);
-			hobj.hTextY = text(0,0,'','Parent',hAxes,'Rotation',90,'ButtonDownFcn',@hobj.FcnStartDrag);
+			hobj.hTextX = text(0,0,'','Color',hobj.Color,'Parent',hAxes,'ButtonDownFcn',@hobj.FcnStartDrag);
+			hobj.hTextY = text(0,0,'','Color',hobj.Color,'Parent',hAxes,'Rotation',90,'ButtonDownFcn',@hobj.FcnStartDrag);
             
             %UIMENU for RITHT-CLICK
             hcmenu = uicontextmenu;
@@ -108,6 +114,7 @@ classdef scalebar <handle
             p.addParameter('hTextX_Pos',0.02*[axisXWidth, -axisYWidth]);
             p.addParameter('hTextY_Pos',0.02*[-axisXWidth, axisYWidth]);
             p.addParameter('hTextY_Rot',hobj.hTextY_Rot);
+            p.addParameter('Color',hobj.Color);
             if isempty(varargin) %scalebar() 
                 p.parse();
             elseif ~ishandle(varargin{1}) %scalebar('Prop','Value')
@@ -117,7 +124,7 @@ classdef scalebar <handle
             end
 			%default settings
             for prop={'XLen','YLen','XUnit','YUnit','hTextY_Rot',...
-                      'Position','Border','hTextX_Pos','hTextY_Pos'}
+                      'Position','Border','hTextX_Pos','hTextY_Pos','Color'}
                 hobj.(prop{1}) = p.Results.(prop{1});
             end
         end
@@ -168,6 +175,8 @@ classdef scalebar <handle
 			set(hobj.hLineX, 'XData', XPos+[0 hobj.XLen]);
 			set(hobj.hTextX, 'Position', [hobj.hTextX_Pos+value, 0]);
 			set(hobj.hTextY, 'Position', [hobj.hTextY_Pos+value, 0]);
+            set(hobj.hLineY, 'Color', hobj.Color);
+            set(hobj.hLineX, 'Color', hobj.Color);
 		end
 		function SethTextX_Pos(hobj, varargin)
             value = hobj.hTextX_Pos;
@@ -224,8 +233,19 @@ classdef scalebar <handle
 		end
 		function SetYUnit(hobj,  varargin)
             value = hobj.YUnit;
-			if ishandle(hobj.hTextY)
-				set(hobj.hTextY, 'String',  [num2str(hobj.YLen),' ',value]);
+            if ishandle(hobj.hTextY)
+               set(hobj.hTextY, 'String',  [num2str(hobj.YLen),' ',value]);
+            end
+        end
+        function SetColor(hobj,  varargin)
+            value = hobj.Color;
+            if numel(validatecolor(value))==3
+                hobj.hLineX(1).Color = value;
+                hobj.hLineX(2).Color = value;
+                hobj.hLineY(1).Color = value;
+                hobj.hLineY(2).Color = value;
+                hobj.hTextX.Color = value;
+                hobj.hTextY.Color = value;
             end
         end
 	end
