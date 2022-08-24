@@ -28,8 +28,6 @@ classdef scalebar <handle
 	% GUI objects
 		hLineX %SCALE-X-LINE, L&R
 		hLineY %SCALE-Y-LINE, L&H
-		hTextX %SCALE-X-LABEL
-		hTextY %SCALE-Y-LABEL
 	end
 	properties (SetObservable=true)
 	% Main properties
@@ -38,6 +36,8 @@ classdef scalebar <handle
 		Border = 'UR'           %'LL', 'LR', 'UL', 'UR'
 		XUnit = ''              %SCALE-X-UNIT, string
 		YUnit = ''              %SCALE-Y-UNIT
+		hTextX                  %SCALE-X-LABEL
+		hTextY                  %SCALE-Y-LABEL
 		XLen                  %SCALE-X-LENGTH
 		YLen                  %SCALE-Y-LENGTH
 		hTextX_Pos            %SCALE-X-LABEL-POSITION
